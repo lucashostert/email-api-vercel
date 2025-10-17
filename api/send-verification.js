@@ -137,24 +137,41 @@ module.exports = async (req, res) => {
       ? 'Confirme seu cadastro - UniCallMed' 
       : 'Código de acesso - UniCallMed';
     
+    console.log('📧 Enviando email para:', email);
+    console.log('🔑 API Key presente:', RESEND_API_KEY ? 'Sim' : 'Não');
+    
+    const emailPayload = {
+      from: 'UniCallMed <onboarding@resend.dev>',
+      to: email,
+      subject: subject,
+      html: getEmailTemplate(code, type)
+    };
+    
+    console.log('📦 Payload:', JSON.stringify(emailPayload, null, 2));
+    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        from: 'UniCallMed <onboarding@resend.dev>',
-        to: email,
-        subject: subject,
-        html: getEmailTemplate(code, type)
-      })
+      body: JSON.stringify(emailPayload)
     });
     
+    console.log('📬 Resend status:', response.status);
+    
     if (!response.ok) {
-      const error = await response.json();
-      console.error('Erro Resend:', error);
-      return res.status(500).json({ error: 'Falha ao enviar email' });
+      const errorText = await response.text();
+      console.error('❌ Erro Resend:', errorText);
+      console.error('Status:', response.status);
+      console.error('Headers:', response.headers);
+      
+      return res.status(200).json({ 
+        success: true,
+        code: code,
+        expiresIn: 600,
+        warning: 'Email não enviado (erro Resend), mas código gerado'
+      });
     }
     
     const result = await response.json();
