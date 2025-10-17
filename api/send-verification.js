@@ -1,5 +1,5 @@
-// API Vercel para envio de código de verificação
-const RESEND_API_KEY = 're_QpbyFToK_Bs6EYzR3KCZqneZbKnm9Vtjb';
+// API Vercel para envio de código de verificação por email
+const RESEND_API_KEY = process.env.RESEND_API_KEY || 're_QpbyFToK_Bs6EYzR3KCZqneZbKnm9Vtjb';
 
 /**
  * Gera código de 6 dígitos
@@ -99,24 +99,23 @@ function getEmailTemplate(code, type) {
   `;
 }
 
-module.exports = async function handler(req, res) {
-  // CORS Headers - DEVE SER PRIMEIRA COISA
+module.exports = async (req, res) => {
+  // SEMPRE adicionar headers CORS primeiro
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
-  );
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST,PUT,DELETE');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   
-  // Handle preflight OPTIONS request
+  // Responder OPTIONS (preflight)
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
   
-  // Only allow POST
+  // Só aceitar POST
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    res.status(405).json({ error: 'Method not allowed' });
+    return;
   }
   
   try {
